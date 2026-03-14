@@ -1,6 +1,7 @@
 name: Update golang-dist mirror
-author: Arthur Zamarin
-description: Fetch new upstream tags for a mirror and trigger golang vendor dist builds for them
+# Origianal author: Arthur Zamarin
+# Modified by: liuyujielol
+description: Fetch new upstream tags for a mirror and trigger pnpm node_modules builds for them
 inputs:
   tag-filter:
     description: Bash pattern used to filter processed tags (matched against tag name, without "refs/tags/")
@@ -52,23 +53,22 @@ runs:
       shell: bash
       run: |
         WORKFLOW="
-        name: Create golang vendor dist
+        name: Create pnpm node_modules dist
         on:
           push:
             tags:
               - '**'
 
         jobs:
-          golang-dist:
+          pnpm-dist:
             runs-on: ubuntu-latest
             permissions:
               contents: write
             steps:
-              - name: Create golang dist
-                uses: projg2/golang-dist-action@v1
+              - name: Create pnpm node_modules dist
+                uses: liuyujielol/pnpm-dist-action@v1
                 with:
                   dist-filename: ${{ github.event.repository.name }}-@TAG@
-                  vendor-dir: ${{ inputs.vendor-dir-format }}
         "
         while read tag; do
           echo "::group::Processing ${tag}"
@@ -85,8 +85,8 @@ runs:
             git rm -rf --ignore-unmatch .github/workflows &&
             mkdir -p .github/workflows &&
             WORKFLOW=${WORKFLOW//@VTAG@/${vtag}} &&
-            echo "${WORKFLOW//@TAG@/${tag_name}}" > .github/workflows/golang-dist.yml &&
-            git add .github/workflows/golang-dist.yml &&
+            echo "${WORKFLOW//@TAG@/${tag_name}}" > .github/workflows/pnpm-dist.yml &&
+            git add .github/workflows/pnpm-dist.yml &&
             git commit -m "Replace workflows" || exit 1
           fi
           git push origin HEAD:${tag} || exit 1
